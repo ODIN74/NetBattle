@@ -8,32 +8,40 @@ public class PlayerController : MonoBehaviour
     [SerializeField]
     private float sensitivityX = 1f;
 
-
-
     [SerializeField]
     private float speed =5f;
 
+    [SerializeField]
+    private Transform _firePoint;
+
+    [SerializeField]
+    private GameObject _bulletPrefab;
+
     private Transform _playerTransform;
+
     private Animator _playerAnim;
 
     private float currentX;
 
+    private PlayerModel _model;
 
-	// Use this for initialization
 	void Start ()
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         _playerTransform = transform;
         _playerAnim = GetComponent<Animator>();
+        _model = GetComponent<PlayerModel>();
 	}
 	
-	// Update is called once per frame
 	void Update ()
     {
         currentX += Input.GetAxis("Mouse X");
 
         _playerTransform.rotation = Quaternion.Euler(0f, currentX * sensitivityX, 0);
+
+        if (Input.GetButtonDown("Fire1"))
+            Fire();
 
         if (Input.GetAxis("Vertical") > 0)
         {
@@ -94,8 +102,13 @@ public class PlayerController : MonoBehaviour
                 _playerAnim.ResetTrigger("Backward");
                 _playerAnim.SetTrigger("Idle");
             }
+        }          
+    }
 
-        }
-            
+    private void Fire()
+    {
+        var bullet = Instantiate(_bulletPrefab, _firePoint);
+        bullet.GetComponent<BulletModel>().Initialize(_model.TargetPoint);
+        bullet.transform.SetParent(null);
     }
 }
