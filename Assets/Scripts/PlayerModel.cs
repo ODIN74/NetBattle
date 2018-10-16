@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.Networking;
 
-public class PlayerModel : MonoBehaviour, IDamagable
+public class PlayerModel : NetworkBehaviour, IDamagable
 {
     [SerializeField]
     private float _maxHealth = 100f;
@@ -18,8 +19,11 @@ public class PlayerModel : MonoBehaviour, IDamagable
 
     private Animator _anim;
 
+    [SyncVar]
+    private float _currentHealth;
+
     [HideInInspector]
-    public float GetHealth { get; private set; }
+    public float GetHealth { get { return _currentHealth; } private set { _currentHealth = value; } }
 
     [HideInInspector]
     public Vector3 TargetPoint { get; private set; }
@@ -28,15 +32,29 @@ public class PlayerModel : MonoBehaviour, IDamagable
 
     private Camera _mainCamera;
 
+    private MainCamera _mainCameraController;
+
+    private Transform _rayPoint;
+
     private Color _normalAimColor;
+
+    private Canvas _canvas;
+
+    public override void OnStartLocalPlayer()
+    {
+        gameObject.name = "Local";
+    }
 
     void Start ()
     {
         _mainCamera = Camera.main;
+        _mainCameraController = _mainCamera.GetComponent<MainCamera>();
         _anim = GetComponent<Animator>();
+        _canvas = GetComponentInParent<Canvas>();
         _aim = GameObject.FindWithTag("Aim").GetComponent<Image>();
         _normalAimColor = _aim.color;
         GetHealth = _maxHealth;
+        _rayPoint = _mainCamera.GetComponentInChildren<Transform>();
         var _images = GetComponentsInChildren<Image>();
         foreach(var obj in _images)
         {
@@ -56,7 +74,8 @@ public class PlayerModel : MonoBehaviour, IDamagable
 
     public void FixedUpdate()
     {
-        var raycastStartPoint = new Vector3(_mainCamera.pixelWidth / 2 + _offsetY, _mainCamera.pixelHeight / 2, 2f);
+
+        var raycastStartPoint = new Vector3(_mainCamera.pixelWidth / 2, _mainCamera.pixelHeight / 2, 0);
         var ray = _mainCamera.ScreenPointToRay(raycastStartPoint);
         RaycastHit hit;
         Physics.Raycast(ray, out hit);
@@ -64,7 +83,15 @@ public class PlayerModel : MonoBehaviour, IDamagable
             _aim.color = Color.red;
         else if (!_aim.color.Equals(_normalAimColor))
             _aim.color = _normalAimColor;            
-        TargetPoint = hit.point;
+    }
+
+    public Vector3 GetTargetPoint()
+    {
+        var raycastStartPoint = new Vector3(Screen.width / 2, Screen.height / 2 + _offsetY, 0);
+        var ray = _mainCamera.ScreenPointToRay(raycastStartPoint);
+        RaycastHit hit;
+        Physics.Raycast(ray, out hit);
+        return hit.point;
     }
 
     public void Damage (float damage)
@@ -94,5 +121,10 @@ public class PlayerModel : MonoBehaviour, IDamagable
         }
         else
             Destroy(gameObject);
+    }
+
+    private void LateUpdate()
+    {
+        _canvas.transform.LookAt(Camera.main.transform, Vector3.up);
     }
 }
