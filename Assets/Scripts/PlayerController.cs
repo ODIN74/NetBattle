@@ -46,7 +46,15 @@ public class PlayerController : NetworkBehaviour
 
     private PlayerModel _model;
 
-	void Start ()
+    private NetworkAnimator _netAnim;
+
+    public override void OnStartLocalPlayer()
+    {
+        base.OnStartLocalPlayer();
+        
+    }
+
+    void Start ()
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -54,7 +62,7 @@ public class PlayerController : NetworkBehaviour
         _playerAnim = GetComponent<Animator>();
         _model = GetComponent<PlayerModel>();
 	}
-	
+
 	void Update ()
     {
         if (!isLocalPlayer)
@@ -66,67 +74,51 @@ public class PlayerController : NetworkBehaviour
         _playerTransform.rotation = Quaternion.Euler(0f, currentX * sensitivityX, 0);
 
         if (Input.GetButtonDown("Fire1"))
-            CmdFire();
+            Fire();
 
         if (Input.GetAxis("Vertical") > 0)
         {
             _playerTransform.Translate(Vector3.forward * speed * Time.deltaTime);
-            if (_playerAnim)
-            {
                 _playerAnim.ResetTrigger("Idle");
                 _playerAnim.ResetTrigger("Backward");
                 _playerAnim.ResetTrigger("ToLeft");
                 _playerAnim.ResetTrigger("ToRight");
                 _playerAnim.SetTrigger("Forward");
-            }
         }
         else if (Input.GetAxis("Vertical") < 0)
         {
             _playerTransform.Translate(Vector3.back * speed * Time.deltaTime);
-            if (_playerAnim)
-            {
                 _playerAnim.ResetTrigger("Idle");
                 _playerAnim.ResetTrigger("Forward");
                 _playerAnim.ResetTrigger("ToLeft");
                 _playerAnim.ResetTrigger("ToRight");
                 _playerAnim.SetTrigger("Backward");
-            }
-                
         }
         else if (Input.GetAxis("Horizontal") > 0)
         {
             _playerTransform.Translate(Vector3.right * speed * Time.deltaTime);
-            if (_playerAnim)
-            {
                 _playerAnim.ResetTrigger("Idle");
                 _playerAnim.ResetTrigger("Forward");
                 _playerAnim.ResetTrigger("ToLeft");
                 _playerAnim.ResetTrigger("Backward");
                 _playerAnim.SetTrigger("ToRight");
-            }
         }
         else if (Input.GetAxis("Horizontal") < 0)
         {
             _playerTransform.Translate(Vector3.left * speed * Time.deltaTime);
-            if (_playerAnim)
-            {
                 _playerAnim.ResetTrigger("Idle");
                 _playerAnim.ResetTrigger("Forward");
                 _playerAnim.ResetTrigger("ToRight");
                 _playerAnim.ResetTrigger("Backward");
                 _playerAnim.SetTrigger("ToLeft");
-            }
         }
         else
         {
-            if (_playerAnim)
-            {
                 _playerAnim.ResetTrigger("ToRight");
                 _playerAnim.ResetTrigger("Forward");
                 _playerAnim.ResetTrigger("ToLeft");
                 _playerAnim.ResetTrigger("Backward");
                 _playerAnim.SetTrigger("Idle");
-            }
         }          
     }
 
@@ -143,11 +135,36 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    [Command]
-    private void CmdFire()
+    private void Fire()
     {
-        var bullet = Instantiate(_bulletPrefab, _firePoint.position, _firePoint.rotation);
-        bullet.GetComponent<BulletModel>().Initialize(_model.GetTargetPoint());
-        NetworkServer.Spawn(bullet);
+        Vector3 targetPos;
+        Quaternion rotation;
+        if (isLocalPlayer)
+        {
+             targetPos = _model.GetTargetPosition();
+             rotation = Quaternion.identity;
+        }
+        else
+        {
+            targetPos = Vector3.zero;
+            rotation = _model.GetRotation();
+        }
+        CmdFire(targetPos, rotation);
+    }
+
+    [Command]
+    private void CmdFire(Vector3 targetPos, Quaternion rotation)
+    {
+        if (isLocalPlayer)
+        {
+            var bullet = Instantiate(_bulletPrefab, _firePoint.position, _firePoint.rotation);
+            bullet.GetComponent<BulletModel>().Initialize(targetPos);
+        }
+        else
+        {
+            var bullet = Instantiate(_bulletPrefab, _firePoint.position, rotation);
+            bullet.GetComponent<BulletModel>().Initialize();
+            NetworkServer.Spawn(bullet);
+        }
     }
 }

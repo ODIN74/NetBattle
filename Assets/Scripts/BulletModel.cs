@@ -19,29 +19,38 @@ public class BulletModel : NetworkBehaviour
 
     private bool _isHitted;
 
-    private Vector3 _targetPosition;
+    private Vector3 _tagetPosition;
 
-    private ParticleSystem _particle;
+    private bool localFlag = false;
 
     public void Initialize(Vector3 targetPosition)
     {
-
-        //_bulletTransform.position = _firePoint.position;
-        //_bulletTransform.rotation = _firePoint.rotation;
-        //Instantiate(gameObject, _bulletTransform.position, _bulletTransform.rotation);
-        _particle = GetComponent<ParticleSystem>();
-        _targetPosition = targetPosition;
+        localFlag = true;
+        _tagetPosition = targetPosition;
         _isHitted = false;
         StartCoroutine(BulletDestroyer(_bulletLifetime));
     }
 
-    private void FixedUpdate()
+    public void Initialize()
+    {
+        localFlag = false;
+        _isHitted = false;
+        StartCoroutine(BulletDestroyer(_bulletLifetime));
+    }
+
+        private void FixedUpdate()
     {
 
         if (_isHitted)
             return;
 
-        Vector3 finalPos = transform.position + (_targetPosition - transform.position).normalized * _speed * Time.fixedDeltaTime;
+        Vector3 finalPos;
+
+        if (localFlag)
+            finalPos = transform.position + (_tagetPosition - transform.position).normalized * _speed * Time.fixedDeltaTime;
+        else
+            finalPos = transform.position + transform.forward.normalized * _speed * Time.fixedDeltaTime;
+
         RaycastHit hit;
         if (Physics.Linecast(transform.position, finalPos, out hit))
         {
@@ -49,7 +58,6 @@ public class BulletModel : NetworkBehaviour
             {
                 _isHitted = true;
                 transform.position = hit.point;
-
                 Destroy(gameObject);
             }
 
@@ -65,6 +73,7 @@ public class BulletModel : NetworkBehaviour
         {
             transform.position = finalPos;
         }
+
     }
 
     private IEnumerator BulletDestroyer(float bulletLifetime)

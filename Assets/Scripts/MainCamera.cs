@@ -31,8 +31,6 @@ public class MainCamera : NetworkBehaviour
 
     private Transform _cameraTransform;
 
-    private bool flag = false;
-
     private float _currentY;
 
 
