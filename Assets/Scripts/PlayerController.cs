@@ -48,22 +48,25 @@ public class PlayerController : NetworkBehaviour
 
     private NetworkAnimator _netAnim;
 
+    Vector3 targetPos;
+    Quaternion rotation;
+
     public override void OnStartLocalPlayer()
     {
         base.OnStartLocalPlayer();
-        
-    }
-
-    void Start ()
-    {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         _playerTransform = transform;
         _playerAnim = GetComponent<Animator>();
         _model = GetComponent<PlayerModel>();
-	}
+    }
 
-	void Update ()
+    private void Start()
+    {
+        
+    }
+
+    void Update ()
     {
         if (!isLocalPlayer)
             return;
@@ -137,34 +140,14 @@ public class PlayerController : NetworkBehaviour
 
     private void Fire()
     {
-        Vector3 targetPos;
-        Quaternion rotation;
-        if (isLocalPlayer)
-        {
-             targetPos = _model.GetTargetPosition();
-             rotation = Quaternion.identity;
-        }
-        else
-        {
-            targetPos = Vector3.zero;
-            rotation = _model.GetRotation();
-        }
-        CmdFire(targetPos, rotation);
+        rotation = _model.GetRotation();
+        CmdFire(rotation);
     }
 
     [Command]
-    private void CmdFire(Vector3 targetPos, Quaternion rotation)
+    private void CmdFire(Quaternion _rotation)
     {
-        if (isLocalPlayer)
-        {
-            var bullet = Instantiate(_bulletPrefab, _firePoint.position, _firePoint.rotation);
-            bullet.GetComponent<BulletModel>().Initialize(targetPos);
-        }
-        else
-        {
-            var bullet = Instantiate(_bulletPrefab, _firePoint.position, rotation);
-            bullet.GetComponent<BulletModel>().Initialize();
+            var bullet = Instantiate(_bulletPrefab, _firePoint.position, _rotation);
             NetworkServer.Spawn(bullet);
-        }
     }
 }

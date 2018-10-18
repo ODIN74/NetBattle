@@ -2067,9 +2067,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 89be68b045331eb429cbf3fbbc27f7b6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _maxHealth: 100
   _destroyDelay: 3
   _bulletSpawner: {fileID: 4154576922215864}
+  _currentHealth: 0
 --- !u!114 &114585693938074084
 MonoBehaviour:
   m_ObjectHideFlags: 1

@@ -23,9 +23,6 @@ public class PlayerModel : NetworkBehaviour, IDamagable
     private float _currentHealth;
 
     [HideInInspector]
-    public float GetHealth { get { return _currentHealth / _maxHealth; } private set { _currentHealth = value/_maxHealth; } }
-
-    [HideInInspector]
     public Vector3 TargetPoint { get; private set; }
 
     private Image _aim;
@@ -39,6 +36,7 @@ public class PlayerModel : NetworkBehaviour, IDamagable
     public override void OnStartLocalPlayer()
     {
         gameObject.name = "Local";
+        _currentHealth = _maxHealth;
     }
 
     void Start ()
@@ -48,7 +46,6 @@ public class PlayerModel : NetworkBehaviour, IDamagable
         _canvas = GetComponent<Canvas>();
         _aim = GameObject.FindWithTag("Aim").GetComponent<Image>();
         _normalAimColor = _aim.color;
-        GetHealth = _maxHealth;
         var _images = GetComponentsInChildren<Image>();
         foreach(var obj in _images)
         {
@@ -62,8 +59,8 @@ public class PlayerModel : NetworkBehaviour, IDamagable
                 break;
             }
         }
-        if (_fillHealthBar)
-            _fillHealthBar.fillAmount = GetHealth / _maxHealth;
+        //if (_fillHealthBar)
+        //   _fillHealthBar.fillAmount = _currentHealth / _maxHealth;
 	}
 
     public void FixedUpdate()
@@ -79,46 +76,29 @@ public class PlayerModel : NetworkBehaviour, IDamagable
             _aim.color = _normalAimColor;            
     }
 
-    public Vector3 GetTargetPosition()
-    {
-        if (isLocalPlayer)
-        {
-            var raycastStartPoint = new Vector3(Screen.width / 2, Screen.height / 2, 0);
-            var ray = _mainCamera.ScreenPointToRay(raycastStartPoint);
-            RaycastHit hit;
-            Physics.Raycast(ray, out hit);
-            return hit.point;
-        }
-        else
-            return Vector3.zero;
-
-    }
-
     public Quaternion GetRotation()
     {
-        if (!isLocalPlayer)
-        {
             var raycastStartPoint = new Vector3(Screen.width / 2, Screen.height / 2, 0);
             var ray = _mainCamera.ScreenPointToRay(raycastStartPoint);
             RaycastHit hit;
             Physics.Raycast(ray, out hit);
 
-            return Quaternion.Euler(Vector3.SignedAngle(_bulletSpawner.position, hit.point, Vector3.right),
-                                    Vector3.SignedAngle(_bulletSpawner.position, hit.point, Vector3.up),
-                                    Vector3.SignedAngle(_bulletSpawner.position, hit.point, Vector3.forward));
-        }
-        else
-            return Quaternion.identity;
+            return Quaternion.LookRotation(hit.point - _bulletSpawner.position, Vector3.up);
     }
 
     public void Damage (float damage)
     {
-        if (GetHealth <= 0)
+        if (!isServer)
             return;
 
-        OnHealthChange(damage);
+        if (_currentHealth <= 0)
+            return;
 
-        if (GetHealth <= 0)
+        _currentHealth -= damage;
+
+        OnHealthChange(_currentHealth);
+
+        if (_currentHealth <= 0)
             Death();
     }
 
@@ -144,9 +124,8 @@ public class PlayerModel : NetworkBehaviour, IDamagable
             _canvas.transform.LookAt(Camera.main.transform, Vector3.up);
     }
 
-    private void OnHealthChange(float damage)
+    private void OnHealthChange(float health)
     {
-        GetHealth -= damage / _maxHealth;
-        _fillHealthBar.fillAmount = GetHealth;
+        _fillHealthBar.fillAmount = health / _maxHealth;
     }
 }

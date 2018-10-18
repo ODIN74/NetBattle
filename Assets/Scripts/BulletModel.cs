@@ -17,39 +17,21 @@ public class BulletModel : NetworkBehaviour
 
     private Transform _bulletTransform;
 
-    private bool _isHitted;
+    private bool _isHitted = false;
 
-    private Vector3 _tagetPosition;
+    public Vector3 targetPosition;
 
-    private bool localFlag = false;
-
-    public void Initialize(Vector3 targetPosition)
+    public void Start()
     {
-        localFlag = true;
-        _tagetPosition = targetPosition;
-        _isHitted = false;
         StartCoroutine(BulletDestroyer(_bulletLifetime));
     }
 
-    public void Initialize()
+    private void FixedUpdate()
     {
-        localFlag = false;
-        _isHitted = false;
-        StartCoroutine(BulletDestroyer(_bulletLifetime));
-    }
-
-        private void FixedUpdate()
-    {
-
         if (_isHitted)
             return;
 
-        Vector3 finalPos;
-
-        if (localFlag)
-            finalPos = transform.position + (_tagetPosition - transform.position).normalized * _speed * Time.fixedDeltaTime;
-        else
-            finalPos = transform.position + transform.forward.normalized * _speed * Time.fixedDeltaTime;
+        var finalPos = transform.position + transform.forward.normalized * _speed * Time.fixedDeltaTime;
 
         RaycastHit hit;
         if (Physics.Linecast(transform.position, finalPos, out hit))
