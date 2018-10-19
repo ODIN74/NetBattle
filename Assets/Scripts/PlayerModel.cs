@@ -7,7 +7,7 @@ using UnityEngine.Networking;
 public class PlayerModel : NetworkBehaviour, IDamagable
 {
     [SerializeField]
-    private float _maxHealth = 100f;
+    private int _maxHealth = 100;
 
     [SerializeField]
     private float _destroyDelay = 3f;
@@ -15,12 +15,13 @@ public class PlayerModel : NetworkBehaviour, IDamagable
     [SerializeField]
     private Transform _bulletSpawner;
 
+    [SerializeField]
     private Image _fillHealthBar;
 
     private Animator _anim;
 
-    [SyncVar(hook ="OnHealthChange")]
-    private float _currentHealth;
+    [SyncVar(hook = "OnHealthChange")]
+    private int _currentHealth;
 
     [HideInInspector]
     public Vector3 TargetPoint { get; private set; }
@@ -37,30 +38,21 @@ public class PlayerModel : NetworkBehaviour, IDamagable
     {
         gameObject.name = "Local";
         _currentHealth = _maxHealth;
+        _mainCamera = Camera.main;
+        _anim = GetComponent<Animator>();
+        _canvas = GetComponentInChildren<Canvas>();
+        _aim = GameObject.FindWithTag("Aim").GetComponent<Image>();
+        _normalAimColor = _aim.color;
     }
 
     void Start ()
     {
         _mainCamera = Camera.main;
         _anim = GetComponent<Animator>();
-        _canvas = GetComponent<Canvas>();
+        _currentHealth = _maxHealth;
+        _canvas = GetComponentInChildren<Canvas>();
         _aim = GameObject.FindWithTag("Aim").GetComponent<Image>();
         _normalAimColor = _aim.color;
-        var _images = GetComponentsInChildren<Image>();
-        foreach(var obj in _images)
-        {
-            if(obj.type != Image.Type.Filled)
-            {
-                continue;
-            }
-            else
-            {
-                _fillHealthBar = obj;
-                break;
-            }
-        }
-        //if (_fillHealthBar)
-        //   _fillHealthBar.fillAmount = _currentHealth / _maxHealth;
 	}
 
     public void FixedUpdate()
@@ -82,11 +74,10 @@ public class PlayerModel : NetworkBehaviour, IDamagable
             var ray = _mainCamera.ScreenPointToRay(raycastStartPoint);
             RaycastHit hit;
             Physics.Raycast(ray, out hit);
-
             return Quaternion.LookRotation(hit.point - _bulletSpawner.position, Vector3.up);
     }
 
-    public void Damage (float damage)
+    public void Damage (int damage)
     {
         if (!isServer)
             return;
@@ -95,8 +86,6 @@ public class PlayerModel : NetworkBehaviour, IDamagable
             return;
 
         _currentHealth -= damage;
-
-        OnHealthChange(_currentHealth);
 
         if (_currentHealth <= 0)
             Death();
@@ -120,12 +109,13 @@ public class PlayerModel : NetworkBehaviour, IDamagable
 
     private void LateUpdate()
     {
-        if(_canvas)
-            _canvas.transform.LookAt(Camera.main.transform, Vector3.up);
+            if(_canvas)
+                _canvas.transform.LookAt(Camera.main.transform, Vector3.up);
     }
 
-    private void OnHealthChange(float health)
+    private void OnHealthChange(int health)
     {
-        _fillHealthBar.fillAmount = health / _maxHealth;
+        _currentHealth = health;
+        _fillHealthBar.fillAmount = (float) _currentHealth / _maxHealth;
     }
 }

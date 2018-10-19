@@ -63,10 +63,26 @@ public class PlayerController : NetworkBehaviour
 
     private void Start()
     {
-        
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+        _playerTransform = transform;
+        _playerAnim = GetComponent<Animator>();
+        _model = GetComponent<PlayerModel>();
     }
 
-    void Update ()
+    public override void PreStartClient()
+    {
+        base.PreStartClient();
+        _netAnim = GetComponent<NetworkAnimator>();
+        _netAnim.SetParameterAutoSend(0, true);
+        _netAnim.SetParameterAutoSend(1, true);
+        _netAnim.SetParameterAutoSend(2, true);
+        _netAnim.SetParameterAutoSend(3, true);
+        _netAnim.SetParameterAutoSend(4, true);
+        _netAnim.SetParameterAutoSend(5, true);
+    }
+
+    void Update()
     {
         if (!isLocalPlayer)
             return;
@@ -131,9 +147,7 @@ public class PlayerController : NetworkBehaviour
         {
             var dir = new Vector3(0, _distanceToPlayerY, -_distanceToPlayerZ);
             var rot = Quaternion.Euler(-Mathf.Clamp(currentY * _sensitivityY, -_maxAngleOfCameraDiviation, _maxAngleOfCameraDiviation), _playerTransform.rotation.eulerAngles.y, 0f);
-
             Camera.main.transform.position = (_playerTransform.position + rot * dir);
-
             Camera.main.transform.LookAt(_playerTransform.position + Vector3.up * _offsetCameraY);
         }
     }
@@ -147,7 +161,10 @@ public class PlayerController : NetworkBehaviour
     [Command]
     private void CmdFire(Quaternion _rotation)
     {
+        if (isClient)
+        {
             var bullet = Instantiate(_bulletPrefab, _firePoint.position, _rotation);
             NetworkServer.Spawn(bullet);
+        }
     }
 }

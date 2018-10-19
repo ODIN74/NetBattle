@@ -13,7 +13,7 @@ public class BulletModel : NetworkBehaviour
     private float _bulletLifetime = 10f;
 
     [SerializeField]
-    private float _damage = 10f;
+    private int _damage = 10;
 
     private Transform _bulletTransform;
 
@@ -36,20 +36,21 @@ public class BulletModel : NetworkBehaviour
         RaycastHit hit;
         if (Physics.Linecast(transform.position, finalPos, out hit))
         {
-            if ((1 << hit.collider.gameObject.layer) != LayerMask.NameToLayer("Player"))
+            if (hit.collider.gameObject.layer != LayerMask.NameToLayer("Player"))
             {
                 _isHitted = true;
                 transform.position = hit.point;
                 Destroy(gameObject);
             }
 
-            IDamagable d = hit.collider.GetComponent<IDamagable>();
-            if (d != null)
-            {
-                transform.position = hit.point;
-                d.Damage(_damage);
-                Destroy(gameObject);
-            }
+            IDamagable d = hit.collider.gameObject.GetComponent<IDamagable>();
+                if (d != null)
+                {
+                    _isHitted = true;
+                    transform.position = hit.point;
+                    d.Damage(_damage);
+                    Destroy(gameObject);
+                }
         }
         else
         {
