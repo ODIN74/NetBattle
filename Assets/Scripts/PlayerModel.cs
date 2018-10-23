@@ -95,12 +95,7 @@ public class PlayerModel : NetworkBehaviour, IDamagable
     {
         if (_anim)
         {
-            _anim.ResetTrigger("Forward");
-            _anim.ResetTrigger("Backward");
-            _anim.ResetTrigger("ToRight");
-            _anim.ResetTrigger("ToLeft");
-            _anim.ResetTrigger("Idle");
-            _anim.SetTrigger("Die");
+            _anim.SetBool("Die", true);
             Destroy(gameObject, _destroyDelay);
         }
         else
