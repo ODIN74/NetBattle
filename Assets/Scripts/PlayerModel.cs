@@ -93,6 +93,8 @@ public class PlayerModel : NetworkBehaviour, IDamagable
 
     public void Death()
     {
+        if (!isServer)
+            return;
         if (_anim)
         {
             _anim.SetBool("Die", true);

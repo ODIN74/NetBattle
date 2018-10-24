@@ -46,8 +46,6 @@ public class PlayerController : NetworkBehaviour
 
     private PlayerModel _model;
 
-    private NetworkAnimator _netAnim;
-
     private Vector3 _playerLastPosition;
 
     private float _currentSpeedX;
@@ -75,18 +73,6 @@ Vector3 targetPos;
         _playerTransform = transform;
         _playerAnim = GetComponent<Animator>();
         _model = GetComponent<PlayerModel>();
-    }
-
-    public override void PreStartClient()
-    {
-        base.PreStartClient();
-        _netAnim = GetComponent<NetworkAnimator>();
-        _netAnim.SetParameterAutoSend(0, true);
-        _netAnim.SetParameterAutoSend(1, true);
-        _netAnim.SetParameterAutoSend(2, true);
-        _netAnim.SetParameterAutoSend(3, true);
-        _netAnim.SetParameterAutoSend(4, true);
-        _netAnim.SetParameterAutoSend(5, true);
     }
 
     void Update()
