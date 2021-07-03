@@ -46,9 +46,13 @@ public class PlayerController : NetworkBehaviour
 
     private PlayerModel _model;
 
-    private NetworkAnimator _netAnim;
+    private Vector3 _playerLastPosition;
 
-    Vector3 targetPos;
+    private float _currentSpeedX;
+
+    private float _currentSpeedZ;
+
+Vector3 targetPos;
     Quaternion rotation;
 
     public override void OnStartLocalPlayer()
@@ -59,6 +63,7 @@ public class PlayerController : NetworkBehaviour
         _playerTransform = transform;
         _playerAnim = GetComponent<Animator>();
         _model = GetComponent<PlayerModel>();
+        _playerLastPosition = transform.position;
     }
 
     private void Start()
@@ -68,18 +73,6 @@ public class PlayerController : NetworkBehaviour
         _playerTransform = transform;
         _playerAnim = GetComponent<Animator>();
         _model = GetComponent<PlayerModel>();
-    }
-
-    public override void PreStartClient()
-    {
-        base.PreStartClient();
-        _netAnim = GetComponent<NetworkAnimator>();
-        _netAnim.SetParameterAutoSend(0, true);
-        _netAnim.SetParameterAutoSend(1, true);
-        _netAnim.SetParameterAutoSend(2, true);
-        _netAnim.SetParameterAutoSend(3, true);
-        _netAnim.SetParameterAutoSend(4, true);
-        _netAnim.SetParameterAutoSend(5, true);
     }
 
     void Update()
@@ -92,53 +85,33 @@ public class PlayerController : NetworkBehaviour
 
         _playerTransform.rotation = Quaternion.Euler(0f, currentX * sensitivityX, 0);
 
+        _currentSpeedX = (_playerTransform.position.x - _playerLastPosition.x) / Time.deltaTime;
+        _currentSpeedZ = (_playerTransform.position.z - _playerLastPosition.z) / Time.deltaTime;
+
+        _playerLastPosition = _playerTransform.position;
+
+        _playerAnim.SetFloat("XSpeed", _currentSpeedX);
+        _playerAnim.SetFloat("ZSpeed", _currentSpeedZ);
+
         if (Input.GetButtonDown("Fire1"))
             Fire();
 
         if (Input.GetAxis("Vertical") > 0)
         {
             _playerTransform.Translate(Vector3.forward * speed * Time.deltaTime);
-                _playerAnim.ResetTrigger("Idle");
-                _playerAnim.ResetTrigger("Backward");
-                _playerAnim.ResetTrigger("ToLeft");
-                _playerAnim.ResetTrigger("ToRight");
-                _playerAnim.SetTrigger("Forward");
         }
         else if (Input.GetAxis("Vertical") < 0)
         {
             _playerTransform.Translate(Vector3.back * speed * Time.deltaTime);
-                _playerAnim.ResetTrigger("Idle");
-                _playerAnim.ResetTrigger("Forward");
-                _playerAnim.ResetTrigger("ToLeft");
-                _playerAnim.ResetTrigger("ToRight");
-                _playerAnim.SetTrigger("Backward");
         }
         else if (Input.GetAxis("Horizontal") > 0)
         {
             _playerTransform.Translate(Vector3.right * speed * Time.deltaTime);
-                _playerAnim.ResetTrigger("Idle");
-                _playerAnim.ResetTrigger("Forward");
-                _playerAnim.ResetTrigger("ToLeft");
-                _playerAnim.ResetTrigger("Backward");
-                _playerAnim.SetTrigger("ToRight");
         }
         else if (Input.GetAxis("Horizontal") < 0)
         {
             _playerTransform.Translate(Vector3.left * speed * Time.deltaTime);
-                _playerAnim.ResetTrigger("Idle");
-                _playerAnim.ResetTrigger("Forward");
-                _playerAnim.ResetTrigger("ToRight");
-                _playerAnim.ResetTrigger("Backward");
-                _playerAnim.SetTrigger("ToLeft");
-        }
-        else
-        {
-                _playerAnim.ResetTrigger("ToRight");
-                _playerAnim.ResetTrigger("Forward");
-                _playerAnim.ResetTrigger("ToLeft");
-                _playerAnim.ResetTrigger("Backward");
-                _playerAnim.SetTrigger("Idle");
-        }          
+        }       
     }
 
     private void LateUpdate()
